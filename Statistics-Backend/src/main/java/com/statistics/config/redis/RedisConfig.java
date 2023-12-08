@@ -1,7 +1,7 @@
 package com.statistics.config.redis;
 
+import com.statistics.util.Props;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
@@ -21,25 +21,18 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 @RequiredArgsConstructor
 @Conditional(RedisPropertyBeanCondition.class)
 public class RedisConfig {
-    @Value("${spring.data.redis.host}")
-    private String redisHost;
-
-    @Value("${spring.data.redis.port}")
-    private int redisPort;
-
-    @Value("${spring.data.redis.topic.event:event}")
-    private String eventTopicName;
+    private final Props props;
 
     /* Redis Connection Factory */
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
-        return new LettuceConnectionFactory(redisHost, redisPort);
+        return new LettuceConnectionFactory(props.getRedisHost(), props.getRedisPort());
     }
 
     /* Event Channel Topic */
     @Bean
     public ChannelTopic eventTopic() {
-        return new ChannelTopic(eventTopicName);
+        return new ChannelTopic(props.getEventTopicName());
     }
 
     @Bean
