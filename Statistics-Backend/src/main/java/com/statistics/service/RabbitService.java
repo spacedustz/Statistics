@@ -74,12 +74,14 @@ public class RabbitService {
         factory.setPort(props.getPort());
         factory.setUsername(props.getUsername());
         factory.setPassword(props.getPassword());
+
         connectionFactoryMap.put(1, factory);
         log.info("RabbitMQ Connection Factory Created - Host : {}, Port : {}", props.getHost(), props.getPort());
 
         // TODO 3: Connection Factory에서 Connection을 1개만 만들기
         connectionFactoryMap.forEach((key, connectionFactory) -> {
             Connection connection = null;
+
             try {
                 connection = factory.newConnection();
                 connectionMap.put(1, connection);
@@ -102,6 +104,7 @@ public class RabbitService {
                             }
                         }
                     });
+
                     channelMap.remove(1);
                 }
 
@@ -116,12 +119,10 @@ public class RabbitService {
 
                 channelMap.put(1, channelList);
 
-
             } catch (Exception e) {
                 log.error("Rabbit Connection Failed : {}", e.getMessage());
                 e.printStackTrace();
             }
-
         });
     }
 }
