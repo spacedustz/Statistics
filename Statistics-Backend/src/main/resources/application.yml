@@ -1,3 +1,6 @@
+server:
+  port: 9000
+
 spring:
   # H2
   h2:
@@ -63,3 +66,9 @@ rabbit:
   password: guest
   channels: 8
   queues: Cam01, Cam02, Cam03, Cam04, Cam05, Cam06, Cam07, Cam08
+
+# --- Cvedia Instance Names / Wire Names --- #
+cvedia:
+  host: localhost:8080
+  instance: Cam01, Cam02, Cam03, Cam04, Cam05, Cam06, Cam07, Cam08
+  wire-name: NW01C001, NW01C002, NW01C003, NW01C004, NW01C005, NW01C006, NW01C007, NW01C008, NW01C009, NW01C010, NW01C011, NW01C012, NW01C013, NW01C014, NW01C015, NW01C016, NW01C017, NW01C018, NW01C019, NW01C020, NW01C021, NW01C022, NW01C023, NW01C024, NW01C025, NW01C026, NW01C027, NW01C028, NW01C029, NW01C030, NW01C031, NW01C032, NW01C033, NW01C034
