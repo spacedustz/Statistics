@@ -47,4 +47,14 @@ public class Props {
 
     @Value("${rabbit.channels}")
     private int channelCount;
+
+    /* Cvedia */
+    @Value("${cvedia.host}")
+    private String cvediaHost;
+
+    @Value("${cvedia.instance}")
+    private List<String> instances;
+
+    @Value("${cvedia.wire-name}")
+    private List<String> wireNames;
 }
