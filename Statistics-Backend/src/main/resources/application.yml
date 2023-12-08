@@ -54,3 +54,12 @@ task:
         size: 15
     queue:
       capacity: 20
+
+# RabbitMQ
+rabbit:
+  host: localhost
+  port: 5672
+  username: guest
+  password: guest
+  channels: 8
+  queues: Cam01, Cam02, Cam03, Cam04, Cam05, Cam06, Cam07, Cam08
