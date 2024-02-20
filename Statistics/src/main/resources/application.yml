@@ -81,4 +81,4 @@ api:
 # Image URL
 event:
   image:
-    path: /home/skw/data/img/
+    path: /data/img/
