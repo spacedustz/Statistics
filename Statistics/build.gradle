@@ -1,0 +1,86 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.2.2'
+    id 'io.spring.dependency-management' version '1.1.4'
+}
+
+group = 'statistics'
+version = '1.0.0'
+
+java {
+    sourceCompatibility = '17'
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java'
+        }
+    }
+}
+
+//processResources {
+//	// src/main/resources 내의 모든 파일과 디렉토리를 제외
+//	exclude '**/*'
+//}
+
+dependencies {
+    // Spring Data JPA
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // Spring Web
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+    // Spring Webflux
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+    // Spring AMQP(RabbitMQ)
+    implementation 'org.springframework.boot:spring-boot-starter-amqp'
+
+    // Spring Redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // Crowd Estimation Common
+    implementation group: 'com.dains', name: 'Common', version: '1.0.0'
+
+    // Cache
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'org.ehcache:ehcache:3.10.8'
+    implementation 'javax.cache:cache-api:1.1.1' // expiry 기능을 위해 필요
+
+    //Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    //ModelMapper
+    implementation 'org.modelmapper:modelmapper:3.1.1'
+
+    // XML 관련(Ehcache xml 파일)
+    implementation 'javax.xml.bind:jaxb-api:2.3.1'
+    implementation 'org.glassfish.jaxb:jaxb-runtime:2.3.1'
+    implementation 'javax.activation:activation:1.1.1'
+
+    //Jackson
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.15.2'
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.15.2'
+
+    // Spring Boot Test
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    testImplementation group: 'org.glassfish', name: 'jakarta.el', version: '4.0.2'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
