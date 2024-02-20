@@ -1,0 +1,84 @@
+logging.config: classpath:logback-spring.xml
+
+server:
+  port: 9999
+
+spring:
+  profiles:
+    active: local
+
+  # JPA
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        #show_sql: true // System out ?? ??
+        format_sql: true
+        use_sql_comments: true
+    open-in-view: false
+
+  # ehCache
+  cache:
+    type: jcache
+    jcache:
+      config: classpath:ehcache.xml
+
+  # MariaDB
+  datasource:
+    hikari:
+      connection-test-query: SELECT 1
+      pool-name: master
+      maximum-pool-size: 30
+      minimum-idle: 5
+      jdbc-url: jdbc:mariadb://192.168.0.6:5001/skw
+      username: skw
+      password: 1234
+      driver-class-name: org.mariadb.jdbc.Driver
+      connection-timeout: 5000
+      idle-timeout: 10000
+
+  # Redis
+  data:
+    redis:
+      enabled: true
+      host: 192.168.0.6
+      port: 5002
+      connect-timeout: 5000ms
+      read-timeout: 5000ms
+      use-pool: true
+      check-connection: true
+      lettuce:
+        pool:
+          enabled: true
+          max-active: 50
+          max-idle: 10
+          min-idle: 0
+          max-wait: 3000ms
+          min-evictable-idle-time: 60000ms
+          time-between-eviction-runs: 30000ms
+      topic:
+        enabled: true
+        event: event
+        alarm: alarm
+
+# Thread Pool
+task:
+  executor:
+    core:
+      pool:
+        size: 20
+    max:
+      pool:
+        size: 40
+    queue:
+      capacity: 60
+
+# API Key
+api:
+  key: y48ac14b-15cc-4372-a567-3e92b2c3d479
+
+# Image URL
+event:
+  image:
+    path: /home/skw/data/img/
