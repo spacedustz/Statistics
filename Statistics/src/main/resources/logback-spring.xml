@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!--    <include resource="org/springframework/boot/logging/logback/defaults.xml" />-->
+    <!--    <include resource="org/springframework/boot/logging/logback/console-appender.xml" />-->
+    <!-- 변수 지정 -->
+    <property name="LOG_DIR" value="/logs/event" />
+    <property name="LOG_PATH_NAME" value="${LOG_DIR}/event.log" />
+    <property name="INTEGRATION_PLATFORM_LOG_DIR" value="/logs/event" />
+    <property name="INTEGRATION_PLATFORM_LOG_PATH_NAME" value="${INTEGRATION_PLATFORM_LOG_DIR}/integration.log" />
+
+    <!-- DEFAULT FILE Appender -->
+    <appender name="DEFAULT_APPENDER" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH_NAME}</file>
+        <!-- 일자별로 로그파일 적용하기 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH_NAME}.%d{yyyyMMdd}.zip</fileNamePattern>
+            <maxHistory>5</maxHistory> <!-- 일자별 백업파일의 보관기간 -->
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%-5p] [%F]%M\(%L\) : %m%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- INTEGRATION PLATFORM Appender -->
+    <appender name="INTEGRATION_PLATFORM_APPENDER" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${INTEGRATION_PLATFORM_LOG_PATH_NAME}</file>
+        <!-- 일자별로 로그파일 적용하기 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${INTEGRATION_PLATFORM_LOG_PATH_NAME}.%d{yyyyMMdd}.zip</fileNamePattern>
+            <maxHistory>5</maxHistory> <!-- 일자별 백업파일의 보관기간 -->
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%-5p] [%F]%M\(%L\) : %m%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%-5p] [%F]%M\(%L\) : %m%n</pattern>
+        </layout>
+    </appender>
+    <!-- TRACE > DEBUG > INFO > WARN > ERROR, 대소문자 구분 안함 -->
+    <!-- profile 을 읽어서 appender 을 설정할수 있다.(phase별 파일을 안만들어도 되는 좋은 기능) -->
+    <!--    <springProfile name="local">-->
+    <!--        <root level="INFO">-->
+    <!--            <appender-ref ref="FILE" />-->
+    <!--            <appender-ref ref="STDOUT" />-->
+    <!--        </root>-->
+    <!--    </springProfile>-->
+    <!--    <springProfile name="dev">-->
+    <!--        <root level="DEBUG">-->
+    <!--            <appender-ref ref="FILE" />-->
+    <!--            <appender-ref ref="STDOUT" />-->
+    <!--        </root>-->
+    <!--    </springProfile>-->
+    <!--    <springProfile name="prod">-->
+    <!--        <root level="INFO">-->
+    <!--            <appender-ref ref="FILE" />-->
+    <!--            <appender-ref ref="STDOUT" />-->
+    <!--        </root>-->
+    <!--    </springProfile>-->
+    <!--    <springProfile name="staging">-->
+    <!--        <root level="INFO">-->
+    <!--            <appender-ref ref="FILE" />-->
+    <!--            <appender-ref ref="STDOUT" />-->
+    <!--        </root>-->
+    <!--    </springProfile>-->
+    <!--    <root level="DEBUG">-->
+    <!--        <appender-ref ref="FILE" />-->
+    <!--        <appender-ref ref="STDOUT" />-->
+    <!--    </root>-->
+
+    <logger name="INTEGRATION_PLATFORM_LOGGER" level="INFO" additivity="false">
+        <appender-ref ref="INTEGRATION_PLATFORM_APPENDER"/>
+    </logger>
+
+
+    <root level="DEBUG">
+        <!--        <appender-ref ref="FILE" />-->
+        <appender-ref ref="STDOUT" />
+        <appender-ref ref="DEFAULT_APPENDER" />
+    </root>
+</configuration>
