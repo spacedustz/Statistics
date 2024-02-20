@@ -1,0 +1,103 @@
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.ehcache.org/v3"
+        xsi:schemaLocation="http://www.ehcache.org/v3
+  http://www.ehcache.org/schema/ehcache-core-3.10.xsd">
+    <cache-template name="defaultTemplate">
+        <expiry>
+            <ttl unit="seconds">600</ttl>
+        </expiry>
+        <listeners>
+            <listener>
+                <class>com.dains.common.util.EhcacheEventLogging</class>
+                <event-firing-mode>ASYNCHRONOUS</event-firing-mode>
+                <event-ordering-mode>UNORDERED</event-ordering-mode>
+                <events-to-fire-on>CREATED</events-to-fire-on>
+                <events-to-fire-on>EVICTED</events-to-fire-on>
+                <events-to-fire-on>REMOVED</events-to-fire-on>
+                <events-to-fire-on>UPDATED</events-to-fire-on>
+                <events-to-fire-on>EXPIRED</events-to-fire-on>
+            </listener>
+        </listeners>
+    </cache-template>
+
+    <cache alias="codeCache" uses-template="defaultTemplate">
+        <!--    <key-type>java.lang.String</key-type>-->
+        <!--    <value-type>com.dains.common.domain.cmn.CmnCode</value-type>-->
+        <expiry>
+            <!-- 캐시 만료 시간 = timeToLiveSeconds -->
+            <ttl unit="seconds">3600</ttl>
+        </expiry>
+        <resources>
+            <!-- JVM heap 메모리 외부의 메모리 -->
+            <offheap unit="MB">10</offheap>
+            <!-- Disk 메모리, LFU strategy-->
+            <!--      persistent="false" Ehcache will wipe the disk data on shutdown.-->
+            <!--      persistent="true" Ehcache will preserve the disk data on shutdown and try to load it back on restart of the JVM.-->
+            <!--      <disk unit="MB" persistent="false">10</disk>-->
+        </resources>
+    </cache>
+
+    <cache alias="msgCache" uses-template="defaultTemplate">
+        <!--    <key-type>java.lang.String</key-type>-->
+        <!--    <value-type>java.lang.String</value-type>-->
+        <expiry>
+            <!-- 캐시 만료 시간 = timeToLiveSeconds -->
+            <ttl unit="seconds">3600</ttl>
+        </expiry>
+        <resources>
+            <!-- JVM heap 메모리 외부의 메모리 -->
+            <offheap unit="MB">10</offheap>
+            <!-- Disk 메모리, LFU strategy-->
+            <!--      persistent="false" Ehcache will wipe the disk data on shutdown.-->
+            <!--      persistent="true" Ehcache will preserve the disk data on shutdown and try to load it back on restart of the JVM.-->
+            <!--      <disk unit="MB" persistent="false">10</disk>-->
+        </resources>
+    </cache>
+
+    <cache alias="instanceZone" uses-template="defaultTemplate">
+        <!--    <key-type>java.lang.String</key-type>-->
+        <!--    <value-type>com.dains.common.domain.svc.SvcInstanceZone</value-type>-->
+        <expiry>
+            <!-- 캐시 만료 시간 = timeToLiveSeconds -->
+            <ttl unit="seconds">3600</ttl>
+        </expiry>
+        <resources>
+            <!-- JVM heap 메모리 외부의 메모리 -->
+            <offheap unit="MB">10</offheap>
+            <!-- Disk 메모리, LFU strategy-->
+            <!--      persistent="false" Ehcache will wipe the disk data on shutdown.-->
+            <!--      persistent="true" Ehcache will preserve the disk data on shutdown and try to load it back on restart of the JVM.-->
+            <!--      <disk unit="MB" persistent="false">10</disk>-->
+        </resources>
+    </cache>
+
+    <cache alias="instanceName" uses-template="defaultTemplate">
+        <expiry>
+            <!-- 캐시 만료 시간 = timeToLiveSeconds -->
+            <ttl unit="seconds">3600</ttl>
+        </expiry>
+        <resources>
+            <!-- JVM heap 메모리 외부의 메모리 -->
+            <offheap unit="MB">10</offheap>
+            <!-- Disk 메모리, LFU strategy-->
+            <!--      persistent="false" Ehcache will wipe the disk data on shutdown.-->
+            <!--      persistent="true" Ehcache will preserve the disk data on shutdown and try to load it back on restart of the JVM.-->
+            <!--      <disk unit="MB" persistent="false">10</disk>-->
+        </resources>
+    </cache>
+
+    <cache alias="instanceExtName" uses-template="defaultTemplate">
+        <expiry>
+            <!-- 캐시 만료 시간 = timeToLiveSeconds -->
+            <ttl unit="seconds">3600</ttl>
+        </expiry>
+        <resources>
+            <!-- JVM heap 메모리 외부의 메모리 -->
+            <offheap unit="MB">10</offheap>
+            <!-- Disk 메모리, LFU strategy-->
+            <!--      persistent="false" Ehcache will wipe the disk data on shutdown.-->
+            <!--      persistent="true" Ehcache will preserve the disk data on shutdown and try to load it back on restart of the JVM.-->
+            <!--      <disk unit="MB" persistent="false">10</disk>-->
+        </resources>
+    </cache>
+</config>
