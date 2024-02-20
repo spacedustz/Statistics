@@ -63,16 +63,20 @@ spring:
         alarm: alarm
 
 # Thread Pool
-task:
-  executor:
-    core:
-      pool:
-        size: 20
-    max:
-      pool:
-        size: 40
-    queue:
-      capacity: 60
+thread:
+  core-pool-size: 20
+  max-pool-size: 40
+  queue-capacity: 600
+  name-prefix: Executor-
+
+# RabbitMQ
+rabbit:
+  host: 192.168.0.6
+  port: 5672
+  username: admin
+  password: admin
+  channels: 5
+  queues: Test-01, Test-02, Test-03
 
 # API Key
 api:
