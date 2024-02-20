@@ -40,4 +40,11 @@ public class Props {
 
     @Value("${rabbit.queues}")
     private List<String> queues;
+
+    /* Redis */
+    @Value("${spring.data.redis.host}")
+    private String redisHost;
+
+    @Value("${spring.data.redis.port}")
+    private int redisPort;
 }
