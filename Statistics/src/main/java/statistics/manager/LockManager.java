@@ -11,10 +11,10 @@ import java.util.concurrent.locks.ReentrantLock;
 @Component
 @Slf4j
 public class LockManager {
-    private final Map<Integer, Lock> locks = new ConcurrentHashMap<>();
+    private final Map<String, Lock> locks = new ConcurrentHashMap<>();
 
-    public Lock getLock(int routingKey) {
-        return locks.computeIfAbsent(routingKey, id -> new ReentrantLock());
+    public Lock getLock(String instanceName) {
+        return locks.computeIfAbsent(instanceName, id -> new ReentrantLock());
     }
 }
 
