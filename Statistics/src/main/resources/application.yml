@@ -29,7 +29,7 @@ spring:
       pool-name: master
       maximum-pool-size: 30
       minimum-idle: 5
-      jdbc-url: jdbc:mariadb://192.168.0.6:5001/skw
+      jdbc-url: jdbc:mariadb://192.168.0.6:10001/skw
       username: skw
       password: 1234
       driver-class-name: org.mariadb.jdbc.Driver
@@ -41,7 +41,7 @@ spring:
     redis:
       enabled: true
       host: 192.168.0.6
-      port: 5002
+      port: 10002
       connect-timeout: 5000ms
       read-timeout: 5000ms
       use-pool: true
@@ -74,7 +74,7 @@ rabbit:
   username: admin
   password: admin
   channels: 5
-  queues: Test-01, Test-02, Test-03
+  queues: Test
 
 # API Key
 api:
@@ -83,4 +83,4 @@ api:
 # Image URL
 event:
   image:
-    path: /data/img/
+    path: /home/dains/skw/img/
