@@ -23,7 +23,7 @@ repositories {
 
 dependencies {
     // Estimation Common
-    implementation group: 'com.test', name: 'Common', version: '1.0.0'
+    implementation group: 'com.skw', name: 'Common', version: '1.0.0'
 
     // Spring Data JPA
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
