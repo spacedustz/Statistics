@@ -4,8 +4,6 @@ server:
   port: 9999
 
 spring:
-  profiles:
-    active: local
 
   # JPA
   jpa:
@@ -13,7 +11,7 @@ spring:
       ddl-auto: none
     properties:
       hibernate:
-        #show_sql: true // System out ?? ??
+        #show_sql: true
         format_sql: true
         use_sql_comments: true
     open-in-view: false
