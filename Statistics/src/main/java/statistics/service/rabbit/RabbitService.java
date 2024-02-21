@@ -53,9 +53,10 @@ public class RabbitService {
     /* Listen Thread 생성 */
     private void listenEvent() {
         List<Channel> channelList = channelMap.get(1);
+        log.info("RabbitMQ Channel List - {}", channelList.size());
 
-        for (int i = 0; i < props.getQueues().size(); i++) {
-            EventThread thread = new EventThread(this, channelList.get(i), props.getQueues().get(i));
+        for (int i = 0; i < channelList.size(); i++) {
+            EventThread thread = new EventThread(this, channelList.get(i), props.getQueues().get(0));
             executor.execute(thread);
         }
     }
@@ -108,7 +109,8 @@ public class RabbitService {
                 // TODO 3-2: 1개의 Connection에 QueueNameMap의 숫자만큼 채널 생성
                 List<Channel> channelList = new ArrayList<>();
 
-                for (int i = 1; i <= props.getQueues().size(); i++) {
+                for (int i = 1; i <= props.getChannelCount(); i++) {
+                    assert connection != null;
                     Channel channel = connection.createChannel();
                     channelList.add(channel);
                     log.info("RabbitMQ Channel {} Created", i);
@@ -116,7 +118,6 @@ public class RabbitService {
                 channelMap.put(1, channelList);
             } catch (Exception e) {
                 log.error("Rabbit Connection Failed : {}", e.getMessage());
-                e.printStackTrace();
             }
         });
     }
