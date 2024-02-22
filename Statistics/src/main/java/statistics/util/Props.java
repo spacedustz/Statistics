@@ -47,4 +47,8 @@ public class Props {
 
     @Value("${spring.data.redis.port}")
     private int redisPort;
+
+    /* Event Image Path */
+    @Value("${event.image.path}")
+    private String eventImagePath;
 }
