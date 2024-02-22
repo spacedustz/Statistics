@@ -31,6 +31,44 @@ AI Engine에서 분석된 RTSP Stream(IP Cam)의 특정영역 면적당 평균 �
 
 ### 통계 처리 (진행중)
 
-- Redis Hash의 Value에 따라 15초 기준 통계 데이터 생성
+- RabbitMQ에서 Event Data를 Consume 하자마자 MariaDB, Redis Hash에 TimeStamp, count값 등록
+- AI 영상 분석 영역의 인원수 / 면적값 = Average 값과 알람 레벨 상태 기록
+- Redis Hash의 Value에 따라 TimeStamp 상 15초 기준 통계 데이터 생성
 - 15초 데이터 기준으로 30초, 1분, 5분, 10분, 1시간 데이터 생성
 - MariaDB 테이블 파티셔닝
+
+> **통계 데이터 쌓기**
+
+- [Code](https://github.com/spacedustz/Statistics/blob/main/Statistics/src/main/java/statistics/service/rabbit/EventDeliveryCallBack.java)
+
+![img](./Description/img/Redis-Insert.png)
+
+<br>
+
+> **TimeStamp 15초 기준으로 Grouping**
+
+- 진행중
+
+<br>
+
+> **15초 통계 데이터 기준으로 30초 데이터 Insert**
+
+- 진행중
+
+<br>
+
+> **15초 통계 데이터 기준으로 1분 데이터 Insert**
+
+- 진행중
+
+<br>
+
+> **15초 통계 데이터 기준으로 15분 데이터 Insert**
+
+- 진행중
+
+<br>
+
+> **15초 통계 데이터 기준으로 1시간 데이터 Insert**
+
+- 진행중
