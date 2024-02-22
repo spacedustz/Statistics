@@ -37,11 +37,25 @@ AI Engine에서 분석된 RTSP Stream(IP Cam)의 특정영역 면적당 평균 �
 - 15초 데이터 기준으로 30초, 1분, 5분, 10분, 1시간 데이터 생성
 - MariaDB 테이블 파티셔닝
 
+<br>
+
 > **통계 데이터 쌓기**
 
 - [Code](https://github.com/spacedustz/Statistics/blob/main/Statistics/src/main/java/statistics/service/rabbit/EventDeliveryCallBack.java)
 
+**영역 내 인원수 통계**
+
 ![img](./Description/img/Redis-Insert.png)
+
+**현재 알람 레벨**
+
+![img](./Description/img/Redis-Current-Alarm-Level.png)
+
+**마지막 알람레벨 TimeStamp**
+
+- ApplicationConstants 클래스의 Alarm Count Interval 값(Milli Second)만큼의 차이가 발생하면 알람 레벨 변경 및 TimeStamp Update
+
+![img](./Description/img/Redis-Latest-TimeStamp.png)
 
 <br>
 
