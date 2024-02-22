@@ -69,7 +69,7 @@ public class RabbitService {
             log.info("RabbitMQ Queue 등록 - Queue Name : {}", props.getQueues().get(i));
         }
 
-        // TODO 2: Connection Factory 생성 (1개만 필요)
+        // TODO 2: Connection Factory 생성 (1개만 필요해서 Server Entity를 안만들고 1로 지정)
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost(props.getHost());
         factory.setPort(props.getPort());
@@ -106,7 +106,7 @@ public class RabbitService {
                     channelMap.remove(1);
                 }
 
-                // TODO 3-2: 1개의 Connection에 QueueNameMap의 숫자만큼 채널 생성
+                // TODO 3-2: 1개의 Connection에 Channel Count 숫자만큼 채널 생성
                 List<Channel> channelList = new ArrayList<>();
 
                 for (int i = 1; i <= props.getChannelCount(); i++) {
