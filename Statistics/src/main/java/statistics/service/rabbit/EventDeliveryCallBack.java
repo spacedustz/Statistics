@@ -16,10 +16,16 @@ import statistics.enums.EventType;
 import statistics.manager.LockManager;
 import statistics.service.JsonParser;
 import statistics.util.DateUtil;
+import statistics.util.Props;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -35,6 +41,7 @@ public class EventDeliveryCallBack implements DeliverCallback {
     private final JsonParser jsonParser;
     private final LockManager lockManager;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final Props props;
 
     @Override
     public void handle(String s, Delivery message) throws IOException {
@@ -70,7 +77,11 @@ public class EventDeliveryCallBack implements DeliverCallback {
 
                     // 통계 생성용 데이터 Redis Hash로 저장
                     if (eventDto.getPeopleCount() > 0) {
-                        redisTemplate.opsForHash().put(RedisConstants.INSTANCE_COUNT + eventDto.getInstanceName(), eventTime, eventDto.getPeopleCount());
+                        redisTemplate.opsForHash().put(RedisConstants.INSTANCE_COUNT + eventDto.getPeopleCount(), eventTime, eventDto.getPeopleCount());
+                    }
+
+                    if (StringUtils.hasLength(eventDto.getImage())) {
+                        this.saveImageFile(eventDto.getImage(), routingKey);
                     }
                 }
             } catch (InterruptedException e) {
@@ -128,5 +139,63 @@ public class EventDeliveryCallBack implements DeliverCallback {
         }
 
         return list;
+    }
+
+    private String saveImageFile(final String base64EncodedImage, final String instanceName) {
+        String fullPath = "";
+        String imageUri = "";
+
+        if (!StringUtils.hasLength(base64EncodedImage)) return "";
+
+        try {
+            byte[] decodedBytes = Base64.getDecoder().decode(base64EncodedImage);
+            String directory = props.getEventImagePath();
+
+            if (!directory.endsWith(File.separator)) {
+                directory = directory + File.separator;
+            }
+
+            String time = DateUtil.getTimeMilli();
+            String yyyymmdd = time.substring(0, 8);
+
+            // 이미지를 저장할 하위 디렉터리 경로 생성 : "2024/02/22/"
+            StringBuilder imagePathBuilder = new StringBuilder();
+            String imagePath = imagePathBuilder
+                    .append(yyyymmdd, 0, 4)
+                    .append(File.separator)
+                    .append(yyyymmdd, 4, 6)
+                    .append(File.separator)
+                    .append(yyyymmdd, 6, 8)
+                    .append(File.separator)
+                    .toString();
+
+            // 전체 디렉터리 경로에 이미지 하위디렉터리 경로 추가 : "/data/img/2024/02/22/"
+            directory += imagePath;
+
+            // 이미지 파일명 생성 : "routingKey_2024022213131333.png
+            String imageFileName = instanceName + "_" + time + ".png";
+
+            File file = new File(directory);
+
+            if (!file.exists()) {
+                file.mkdirs();
+            }
+
+            // 이미지 URI 생성 : "/2024/02/22/routingKey_2024022213131333.png"
+            imageUri = File.separator + imagePath + imageFileName;
+
+            // 전체 파일 경로 생성 : "/data/img/2024/02/22/routingKey_2024022213131333.png"
+            fullPath = directory + imageFileName;
+
+            // Full Path를 Paths 객체로 변환
+            Path outputPath = Paths.get(fullPath);
+
+            // 디코딩된 이미지 데이터를 파일로 저장
+            Files.write(outputPath, decodedBytes);
+        } catch (Exception e) {
+            log.warn("Save Image Exception : {}", e.getMessage());
+        }
+
+        return imageUri;
     }
 }
