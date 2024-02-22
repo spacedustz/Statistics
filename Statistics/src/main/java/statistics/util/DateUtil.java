@@ -19,6 +19,12 @@ public class DateUtil {
         return format.format(calendar.getTime());
     }
 
+    public static String getTimeMilli() {
+        Calendar calendar = Calendar.getInstance();
+        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+        return format.format(calendar.getTime());
+    }
+
     public static String timestampToDate(final long timestamp, final String zone) {
         LocalDateTime localDateTime = null;
 
