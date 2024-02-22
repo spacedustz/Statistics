@@ -2,12 +2,14 @@ package statistics.util;
 
 import org.springframework.util.StringUtils;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class DateUtil {
@@ -41,5 +43,21 @@ public class DateUtil {
         String formattedDate = localDateTime.format(formatter);
 
         return formattedDate;
+    }
+
+    public static long getSecondsDifference(String start, String end) {
+        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
+
+        try {
+            Date startDate = format.parse(start);
+            Date endDate = format.parse(end);
+
+            long difference = endDate.getTime() - startDate.getTime();
+
+            return difference / 1000;
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return 0;
+        }
     }
 }
