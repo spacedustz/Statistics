@@ -1,5 +1,9 @@
 ## 📘 Redis 통계 처리
 
+AI Engine에서 분석된 RTSP Stream(IP Cam)의 특정영역 면적당 평균 인원수 점유 모니터링 및 통계
+
+<br>
+
 ### Initialize RabbitMQ Connections
 
 - RabbitMQ Connection Factory(1개 서버)당 1개의 Connection Factory, Connection 생성
