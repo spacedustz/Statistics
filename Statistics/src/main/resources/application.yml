@@ -64,7 +64,7 @@ spring:
 thread:
   core-pool-size: 20
   max-pool-size: 40
-  queue-capacity: 600
+  queue-capacity: 60
   name-prefix: Executor-
 
 # RabbitMQ
@@ -83,4 +83,4 @@ api:
 # Image URL
 event:
   image:
-    path: /home/dains/skw/img/
+    path: C:/Users/root/Desktop/Event
