@@ -4,7 +4,6 @@ import com.rabbitmq.client.DeliverCallback;
 import com.rabbitmq.client.Delivery;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import statistics.constants.ApplicationConstants;
@@ -15,6 +14,7 @@ import statistics.dto.SecuRTAreaOccupancyExitEventImageDto;
 import statistics.enums.EventType;
 import statistics.manager.LockManager;
 import statistics.service.JsonParser;
+import statistics.service.redis.RedisService;
 import statistics.util.DateUtil;
 import statistics.util.Props;
 
@@ -38,7 +38,7 @@ import java.util.concurrent.locks.Lock;
 public class EventDeliveryCallBack implements DeliverCallback {
     private final JsonParser jsonParser;
     private final LockManager lockManager;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisService redisService;
     private final Props props;
 
     @Override
@@ -74,60 +74,35 @@ public class EventDeliveryCallBack implements DeliverCallback {
             try {
                 if (lock.tryLock(3, TimeUnit.SECONDS)) {
                     // TODO 1: 현재 알람 레벨을 Redis에서 조회
-                    currentAlarmLevel = (String) redisTemplate.opsForValue().get(RedisConstants.INSTANCE_CURRENT_ALARM_LEVEL + eventDto.getInstanceName());
+                    currentAlarmLevel = redisService.getCurrentAlarmLevel(RedisConstants.INSTANCE_CURRENT_ALARM_LEVEL + eventDto.getInstanceName());
 
                     // TODO 2: Redis에 현재 알람 레벨이 없으면 MariaDB에서 조회
                     if (!StringUtils.hasLength(currentAlarmLevel)) {
-//                        Optional<SvcCameraAlarmLevel> svcCameraAlarmLevelOptional = svcCameraAlarmLevelRepository.findById(eventDto.getCameraId());
-//                    }
-
-                        // TODO 3: Redis에는 없고 MariaDB에는 존재할 경우
-//                    if (svcCameraAlarmLevelOptional.isPresent()) {
-//                        svcCameraAlarmLevel = svcCameraAlarmLevelOptional.get();
-//                        currentAlarmLevel = svcCameraAlarmLevel.getAlarmLevel();
-//
-//                        redisTemplate.opsForValue().set(RedisConstants.INSTANCE_CURRENT_ALARM_LEVEL + eventDto.getInstanceName(), currentAlarmLevel);
-                        // TODO 4: Redis, MariaDB 둘다 현재 알람 레벨이 존재하지 않는 경우
-//                    } else {
-//                        currentAlarmLevel = ApplicationConstants.ALARM_LEVEL_1;
-//                        redisTemplate.opsForValue().set(RedisConstants.INSTANCE_CURRENT_ALARM_LEVEL + eventDto.getInstanceName(), currentAlarmLevel);
-//
-//                        svcCameraAlarmLevel = SvcCameraAlarmLevel.builder()
-//                                .cameraId(eventDto.getCameraId())
-//                                .alarmLevel(currentAlarmLevel)
-//                                .peopleCount(eventDto.getPeopleCount())
-//                                .totalSquareMeter(totalSquareMeter)
-//                                .regId(0)
-//                                .updId(0)
-//                                .build();
-//
-//                        svcCameraAlarmLevelRepository.save(svcCameraAlarmLevel);
-//                    }
-                        redisTemplate.opsForValue().set(RedisConstants.INSTANCE_CURRENT_ALARM_LEVEL + eventDto.getInstanceName(), ApplicationConstants.ALARM_LEVEL_1);
+                        redisService.setCurrentAlarmLevel(RedisConstants.INSTANCE_CURRENT_ALARM_LEVEL + eventDto.getInstanceName(), ApplicationConstants.ALARM_LEVEL_1);
                     }
 
-                    redisTemplate.opsForValue().set(RedisConstants.INSTANCE + eventDto.getInstanceName(), eventTime);
+                    redisService.setInstanceEventTime(RedisConstants.INSTANCE + eventDto.getInstanceName(), eventTime);
 
                     /* ===== 통계 생성용 데이터 Redis Hash에 저장 ===== */
                     if (eventDto.getPeopleCount() > 0) {
-                        redisTemplate.opsForHash().put(RedisConstants.INSTANCE_COUNT + eventDto.getInstanceName(), eventTime, eventDto.getPeopleCount());
+                        redisService.setPeopleCount(RedisConstants.INSTANCE_COUNT + eventDto.getInstanceName(), eventTime, eventDto.getPeopleCount());
                     }
 
                     // 현재 알람 레벨과 새로운 알람 레빌이 다를때
                     if (!newAlarmLevel.equals(currentAlarmLevel)) {
-                        Set keys = redisTemplate.opsForHash().keys(RedisConstants.INSTANCE_LATEST_ALARM_LEVEL + eventDto.getInstanceName());
+                        Set keys = redisService.getHashKeys(RedisConstants.INSTANCE_LATEST_ALARM_LEVEL + eventDto.getInstanceName());
 
                         // 새로운 알람레벨 이외의 다른 Hash 필드 삭제
                         if (keys != null && keys.size() > 0) {
                             for (Object key : keys) {
                                 String hashKey = (String) key;
                                 if (!hashKey.equals(newAlarmLevel)) {
-                                    redisTemplate.opsForHash().delete(RedisConstants.INSTANCE_LATEST_ALARM_LEVEL + eventDto.getInstanceName(), hashKey);
+                                    redisService.deleteHashKey(RedisConstants.INSTANCE_LATEST_ALARM_LEVEL + eventDto.getInstanceName(), hashKey);
                                 }
                             }
 
                             // 새로운 알람 레벨의 이벤트를 수신한 시간 조회
-                            String alarmLatestTimeStamp = (String) redisTemplate.opsForHash().get(RedisConstants.INSTANCE_LATEST_ALARM_LEVEL + eventDto.getInstanceName(), newAlarmLevel);
+                            String alarmLatestTimeStamp = (String) redisService.getHashValue(RedisConstants.INSTANCE_LATEST_ALARM_LEVEL + eventDto.getInstanceName(), newAlarmLevel);
 
                             // 이미 알람 레벨 변경 처리를 한 경우 continue
                             if (StringUtils.hasText(alarmLatestTimeStamp)) {
@@ -139,8 +114,8 @@ public class EventDeliveryCallBack implements DeliverCallback {
                                 // 알람 변경 처리를 완료했다면 Hash 필드의 값을 -1로 설정
 
                                 if (DateUtil.getSecondsDifference(alarmLatestTimeStamp, now) > ApplicationConstants.CHECK_ALARM_INTERVAL) {
-                                    redisTemplate.opsForValue().set(RedisConstants.INSTANCE_CURRENT_ALARM_LEVEL + eventDto.getInstanceName(), newAlarmLevel);
-                                    redisTemplate.opsForHash().put(RedisConstants.INSTANCE_LATEST_ALARM_LEVEL + eventDto.getInstanceName(), newAlarmLevel, "-1");
+                                    redisService.setCurrentAlarmLevel(RedisConstants.INSTANCE_CURRENT_ALARM_LEVEL + eventDto.getInstanceName(), newAlarmLevel);
+                                    redisService.setHashValue(RedisConstants.INSTANCE_LATEST_ALARM_LEVEL + eventDto.getInstanceName(), newAlarmLevel, "-1");
 
                                     // MariaDB도 업데이트
                                     // TODO ...
@@ -152,11 +127,11 @@ public class EventDeliveryCallBack implements DeliverCallback {
                                 }
                             } else {
                                 // 알람 레벨 시간이 없을 경우 최초 알람 레벨 시간 저장 + Update MariaDB Alarm Level
-                                redisTemplate.opsForHash().put(RedisConstants.INSTANCE_LATEST_ALARM_LEVEL + eventDto.getInstanceName(), newAlarmLevel, now);
+                                redisService.setHashValue(RedisConstants.INSTANCE_LATEST_ALARM_LEVEL + eventDto.getInstanceName(), newAlarmLevel, now);
                             }
                         } else {
                             // Redis Hash Key가 존재 하지 않을 경우 최초 알람 레벨 시간 저장 + Update MariaDB Alarm Level
-                            redisTemplate.opsForHash().put(RedisConstants.INSTANCE_LATEST_ALARM_LEVEL + eventDto.getInstanceName(), newAlarmLevel, now);
+                            redisService.setHashValue(RedisConstants.INSTANCE_LATEST_ALARM_LEVEL + eventDto.getInstanceName(), newAlarmLevel, now);
                         }
                     } else {
                         // Update MariaDB Alarm Level
