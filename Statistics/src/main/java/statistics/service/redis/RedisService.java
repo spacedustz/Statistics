@@ -1,6 +1,7 @@
 package statistics.service.redis;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import statistics.constants.RedisConstants;
@@ -11,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RedisService {
@@ -39,15 +41,19 @@ public class RedisService {
     }
 
     public Set<String> getAllStatsKeys() {
-        return redisTemplate.keys(RedisConstants.INSTANCE + "*");
+        return redisTemplate.keys(RedisConstants.INSTANCE_COUNT + "*");
     }
 
     public void deleteHashKey(String key, String hashKey) {
         redisTemplate.opsForHash().delete(key, hashKey);
     }
 
-    public long deleteHashKeys(String key, Object... hashKeys) {
-        return redisTemplate.opsForHash().delete(key, hashKeys);
+    public void deleteHashKeys(String key, Object... hashKeys) {
+        try {
+            redisTemplate.opsForHash().delete(key, hashKeys);
+        } catch (Exception e) {
+            log.error("Delete Hash Keys Exception : {}", e.getMessage());
+        }
     }
 
     public String getHashValue(String key, String hashKey) {
@@ -60,10 +66,22 @@ public class RedisService {
 
     public Map<String, Integer> getAllHashKeyAndValues(String key) {
         return redisTemplate.opsForHash().entries(key).entrySet().stream()
-                .sorted(Comparator.comparing(e -> Long.parseLong(String.valueOf(e.getKey()))))
+                .sorted(Comparator.comparing(e -> {
+                    try {
+                        return Long.parseLong(e.getKey().toString());
+                    } catch (NumberFormatException ex) {
+                        throw new RuntimeException("키를 Long 형식으로 파싱하는 데 실패했습니다: " + e.getKey(), ex);
+                    }
+                }))
                 .collect(Collectors.toMap(
-                        e -> String.valueOf(e.getKey()),
-                        e -> Integer.valueOf(String.valueOf(e.getValue())),
+                        e -> (String) e.getKey(),
+                        e -> {
+                            try {
+                                return Integer.valueOf(e.getValue().toString());
+                            } catch (NumberFormatException ex) {
+                                throw new RuntimeException("값을 Integer 형식으로 파싱하는 데 실패했습니다: " + e.getValue(), ex);
+                            }
+                        },
                         (e1, e2) -> e1,
                         LinkedHashMap::new
                 ));
