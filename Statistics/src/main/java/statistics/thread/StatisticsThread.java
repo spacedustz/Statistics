@@ -1,6 +1,5 @@
 package statistics.thread;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import statistics.constants.RedisConstants;
 import statistics.service.StatisticsService;
@@ -11,14 +10,19 @@ import java.math.BigDecimal;
 import java.util.*;
 
 @Slf4j
-@RequiredArgsConstructor
 public class StatisticsThread extends Thread {
-    private final RedisService redisService;
-    private final StatisticsService statisticsService;
+    private RedisService redisService;
+    private StatisticsService statisticsService;
     private List<String> keyList;
     private Integer squareMeter;
     private String baseTime = "";
     private String routingKey = "";
+
+    public StatisticsThread(List<String> keyList, RedisService redisService, StatisticsService statisticsService) {
+        this.keyList = keyList;
+        this.redisService = redisService;
+        this.statisticsService = statisticsService;
+    }
 
     @Override
     public void run() {
