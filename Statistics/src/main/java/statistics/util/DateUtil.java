@@ -60,4 +60,19 @@ public class DateUtil {
             return 0;
         }
     }
+
+    public static String getDateTime(Date date) {
+        String result = "";
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+        result = dateFormat.format(date);
+        return result;
+    }
+
+    public static Date addSeconds(Date date, Integer seconds) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        cal.add(Calendar.SECOND, seconds);
+        return cal.getTime();
+    }
 }
