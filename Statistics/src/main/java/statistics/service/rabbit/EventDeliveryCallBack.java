@@ -171,6 +171,7 @@ public class EventDeliveryCallBack implements DeliverCallback {
                     dto.setInstanceExtName(routingKey);
                     dto.setEventTime(Long.parseLong(((SecuRTAreaOccupancyEnterEventImageDto) msgObject).getSystemTimestamp()));
                     dto.setEventType(EventType.SecuRTAreaOccupancyEnterEventImageDto);
+                    dto.setTotalSquareMeter(new Random().nextInt(21) + 30);
 
                     list.add(dto);
                 }
@@ -187,6 +188,7 @@ public class EventDeliveryCallBack implements DeliverCallback {
                     dto.setInstanceExtName(routingKey);
                     dto.setEventTime(Long.parseLong(((SecuRTAreaOccupancyExitEventImageDto) msgObject).getSystemTimestamp()));
                     dto.setEventType(EventType.SecuRTAreaOccupancyExitEventImageDto);
+                    dto.setTotalSquareMeter(new Random().nextInt(21) + 30);
 
                     list.add(dto);
                 }
