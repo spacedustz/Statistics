@@ -69,6 +69,7 @@ public class DateUtil {
         return result;
     }
 
+    // 입력받은 Date에 Seconds 추가
     public static Date addSeconds(Date date, Integer seconds) {
         Calendar cal = Calendar.getInstance();
         cal.setTime(date);
