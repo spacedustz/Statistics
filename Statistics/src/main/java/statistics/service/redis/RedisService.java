@@ -41,6 +41,10 @@ public class RedisService {
         redisTemplate.opsForHash().delete(key, hashKey);
     }
 
+    public long deleteHashKeys(String key, Object... hashKeys) {
+        return redisTemplate.opsForHash().delete(key, hashKeys);
+    }
+
     public String getHashValue(String key, String hashKey) {
         return (String) redisTemplate.opsForHash().get(key, hashKey);
     }
