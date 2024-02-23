@@ -3,6 +3,7 @@ package statistics.service.redis;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import statistics.constants.RedisConstants;
 
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -35,6 +36,10 @@ public class RedisService {
         return redisTemplate.opsForHash().keys(key).stream()
                 .map(Object::toString)
                 .collect(Collectors.toSet());
+    }
+
+    public Set<String> getAllStatsKeys() {
+        return redisTemplate.keys(RedisConstants.INSTANCE + "*");
     }
 
     public void deleteHashKey(String key, String hashKey) {
