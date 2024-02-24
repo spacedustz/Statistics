@@ -141,6 +141,9 @@ public class EventDeliveryCallBack implements DeliverCallback {
                 }
             } catch (InterruptedException e) {
                 log.warn("BasicConsume - Interrupted Exception : {}", e.getMessage());
+                Thread.currentThread().interrupt();
+            } finally {
+                lock.unlock();
             }
         }
     }
