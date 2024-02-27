@@ -13,13 +13,13 @@ import org.hibernate.annotations.Comment;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "svc_15sec_stats")
+@Table(name = "svc_10min_stats")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Comment("서비스-15초 통계")
-public class Svc15SecStat {
+@Comment("서비스-10분 통계")
+public class Svc10MinStat {
     @EmbeddedId
-    private Svc15SecPk id;
+    private Svc10MinPk id;
 
     @Column(name = "average_count", nullable = false, precision = 5, scale = 2)
     private BigDecimal averageCount;
@@ -31,7 +31,7 @@ public class Svc15SecStat {
     private BigDecimal maxPeopleCount;
 
     @Builder
-    public Svc15SecStat(Svc15SecPk id, BigDecimal averageCount, BigDecimal minPeopleCount, BigDecimal maxPeopleCount) {
+    public Svc10MinStat(Svc10MinPk id, BigDecimal averageCount, BigDecimal minPeopleCount, BigDecimal maxPeopleCount) {
         this.id = id;
         this.averageCount = averageCount;
         this.minPeopleCount = minPeopleCount;
