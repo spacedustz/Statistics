@@ -21,6 +21,11 @@ public class DateUtil {
         return format.format(calendar.getTime());
     }
 
+    public static String getDate(Date date, String format) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat(format);
+        return dateFormat.format(date);
+    }
+
     public static String getTimeMilli() {
         Calendar calendar = Calendar.getInstance();
         SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmssSSS");
@@ -75,5 +80,13 @@ public class DateUtil {
         cal.setTime(date);
         cal.add(Calendar.SECOND, seconds);
         return cal.getTime();
+    }
+
+    public static Date addMinutesToJavaDate(Date date, int minute) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.add(Calendar.MINUTE, minute);
+
+        return calendar.getTime();
     }
 }
