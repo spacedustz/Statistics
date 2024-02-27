@@ -65,7 +65,8 @@ AI Engine에서 분석된 RTSP Stream(IP Cam)의 특정영역 면적당 평균 �
 
 ### TimeStamp 15초 기준으로 Grouping
 
-- 각 인스턴스 별 Redis에 쌓인 통계 데이터를 TimeStamp를 기준으로 15초씩 끊어서 MariaDB로 저장
+- 각 인스턴스 별 Redis에 쌓인 통계 데이터를 TimeStamp를 기준으로 15초씩 끊기
+- 각 값의 평균값인 인원수 평균을 average_count(Big Decimal) 로 주고 MariaDB로 저장
 
 ![img](./Description/img/15sec.png)
 
