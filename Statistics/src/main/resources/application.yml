@@ -1,4 +1,4 @@
-logging.config: classpath:logback-spring.xml
+logging.config: classpath:logback-private.xml
 
 server:
   port: 9999
@@ -11,8 +11,8 @@ spring:
       ddl-auto: none
     properties:
       hibernate:
-        #show_sql: true
-        format_sql: true
+        show_sql: false
+#        format_sql: true
         use_sql_comments: true
     open-in-view: false
 
