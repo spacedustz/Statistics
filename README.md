@@ -69,7 +69,15 @@ AI Engine에서 분석된 RTSP Stream(IP Cam)의 특정영역 면적당 평균 �
 
 ![img](./Description/img/15sec.png)
 
+<br>
+
 ![img](./Description/img/15sec-db.png)
+
+<br>
+
+**Redis Hash 내에 TimeStamp가 15초가 되고 MariaDB에 저장후 Hash 삭제**
+
+![img](./Description/img/15sec-delete.png)
 
 <br>
 
