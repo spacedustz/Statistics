@@ -65,8 +65,8 @@ AI Engine에서 분석된 RTSP Stream(IP Cam)의 특정영역 면적당 평균 �
 
 ### TimeStamp 15초 기준으로 Grouping
 
-- 각 인스턴스 별 Redis에 쌓인 통계 데이터를 TimeStamp를 기준으로 15초씩 끊기
-- Hash Value인 인원수 평균을 average_count(Big Decimal) 로 할당
+- 각 인스턴스 별 Redis Hash에 쌓인 통계 데이터를 TimeStamp를 기준으로 15초씩 TreeMap으로 Sort
+- Hash Value인 인원 수 값들의 평균을 average_count(Big Decimal) 로 할당
 - Hash Value의 15초 평균의 Max, Min 값을 Big Decimal로 계산하여 할당
 - MariaDB 저장 후 Redis Hash 제거
 
@@ -86,7 +86,13 @@ AI Engine에서 분석된 RTSP Stream(IP Cam)의 특정영역 면적당 평균 �
 
 ### 15초 통계 데이터 기준으로 30초 데이터 생성
 
-- 진행중
+- 15초 데이터 2개의 average_count 값을 다시 AVG한 값을 average_count에 할당
+- 15초 데이터 2개의 Max, Min 값중 Max 2개중 큰값, Min 2개중 작은 값을 Max, Min에 할당
+- 아래 두 사진은 15~30초에 해당하는 15초 통계 2개의 데이터를 가지고 30초 통계 1개를 만듬
+
+![img](./Description/img/30sec-source.png)
+
+![img](./Description/img/30sec-average.png)
 
 <br>
 
