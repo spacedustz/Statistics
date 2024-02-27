@@ -8,13 +8,14 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import statistics.entity.Svc15SecPk;
 import statistics.entity.Svc15SecStat;
-import statistics.repository.Svc15SecStatRepository;
+import statistics.repository.*;
 import statistics.service.redis.RedisService;
 import statistics.thread.StatisticsThread;
 import statistics.util.DateUtil;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -24,6 +25,11 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class StatisticsService {
     private final Svc15SecStatRepository svc15SecStatRepository;
+    private final Svc30SecStatRepository svc30SecStatRepository;
+    private final Svc1MinStatRepository svc1MinStatRepository;
+    private final Svc5MinStatRepository svc5MinStatRepository;
+    private final Svc10MinStatRepository svc10MinStatRepository;
+    private final Svc1HourStatRepository svc1HourStatRepository;
     private final RedisService redisService;
     private final TaskExecutor executor;
 
@@ -53,6 +59,7 @@ public class StatisticsService {
         }
     }
 
+    /* 15초 통계 생성 */
     @Scheduled(cron = "3,18,33,48 * * * * *")
     public void calculate15SecStats() {
         List<String> keyList = new ArrayList<>();
@@ -74,6 +81,30 @@ public class StatisticsService {
         if (!keyList.isEmpty()) {
             StatisticsThread thread = new StatisticsThread(keyList, redisService, this);
             executor.execute(thread);
+        }
+    }
+
+    /* 30초 통계 생성 */
+    @Scheduled(cron = "15,45 * * * * *")
+    public void calculate30SecStats() {
+        Date date = new Date();
+        String now = DateUtil.getDate(date, "yyyyMMddHHmmss");
+        Integer currentSec = Integer.parseInt(now.substring(12,14));
+
+        // 현재 시간의 초가 15 ~ 45초 사이이면 이전 분의 45, 00초 통계를 이용해 30초 통계 생성
+        if (currentSec >= 15 && currentSec < 45) {
+            String targetStatsDate = DateUtil.getDate(DateUtil.addMinutesToJavaDate(date, -1), "yyyyMMddHHmmss");
+            String targetYyyyMmDd = targetStatsDate.substring(0,8);
+            String targetHhMm = targetStatsDate.substring(8,12);
+
+            svc30SecStatRepository.create30SecStats(targetYyyyMmDd, targetHhMm + "45", now.substring(8,12) + "00");
+        }
+        // 현재 분의 15초, 30초 통계를 이용한 30초 통계 생성
+        else {
+            String yyyymmdd = now.substring(0,8);
+            String hhmm = now.substring(8,12);
+
+            svc30SecStatRepository.create30SecStats(yyyymmdd, hhmm + "15", hhmm + "30");
         }
     }
 }
