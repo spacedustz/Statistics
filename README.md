@@ -2,6 +2,29 @@
 
 AI Engine에서 분석된 RTSP Stream(IP Cam)의 특정영역 면적당 평균 인원수 점유 모니터링 및 통계
 
+> **Back-End - 통계 데이터 쌓기 + 시간 별 통계 계산 용도**
+
+- Java (JDK 17)
+- Spring Boot 3.2.2
+- Spring Web
+- Spring Data JPA
+- Spring WebFlux
+- Spring Data Redis
+- Spring AMQP (RabbitMQ)
+- Spring Cache
+- QueryDSL
+- Model Mapper
+- ehCache
+- Jackson
+- Lombok
+
+<br>
+
+> **Front-End (아직 추가 안함) - 차트 통계 용도**
+
+- TypeScript
+- React
+
 ---
 
 ## 📘 Initialize RabbitMQ Connections
