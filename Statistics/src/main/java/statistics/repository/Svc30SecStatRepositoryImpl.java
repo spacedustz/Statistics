@@ -55,12 +55,13 @@ public class Svc30SecStatRepositoryImpl implements Svc30SecStatRepositoryCustom 
 //                .select(subQuery).execute();
 
         String query = new StringBuilder()
-                .append("INSERT INTO svc_30sec_stats (yyyymmdd, hhmiss, average_count, max_people_count, min_people_count)\n")
+                .append("INSERT INTO svc_30sec_stats (yyyymmdd, hhmiss, average_count, max_people_count, min_people_count, instance_name)\n")
                 .append("SELECT '").append(yyyymmdd).append("', '").append(endHHmmss)
-                .append("', COALESCE(AVG(source.average_count), 0), COALESCE(MAX(source.max_people_count), 0), COALESCE(MIN(source.min_people_count), 0) \n")
+                .append("', COALESCE(AVG(source.average_count), 0), COALESCE(MAX(source.max_people_count), 0), COALESCE(MIN(source.min_people_count), 0), source.instance_name \n")
                 .append("FROM svc_15sec_stats as source ")
-                .append("WHERE source.yyyymmdd = '").append(startHhmmss)
-                .append("' AND '").append(endHHmmss).append("' GROUP BY source.instance_name").toString();
+                .append("WHERE source.yyyymmdd = '").append(yyyymmdd)
+                .append("' AND source.hhmiss BETWEEN '").append(startHhmmss).append("' AND '")
+                .append(endHHmmss).append("' GROUP BY source.instance_name").toString();
 
         return em.createNativeQuery(query).executeUpdate();
     }
