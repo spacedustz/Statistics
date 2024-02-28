@@ -24,17 +24,23 @@ spring:
 
   # MariaDB
   datasource:
-    hikari:
-      connection-test-query: SELECT 1
-      pool-name: master
-      maximum-pool-size: 30
-      minimum-idle: 5
-      jdbc-url: jdbc:mariadb://192.168.0.6:10001/skw
-      username: skw
-      password: 1234
-      driver-class-name: org.mariadb.jdbc.Driver
-      connection-timeout: 5000
-      idle-timeout: 10000
+    url: jdbc:mariadb://192.168.0.6:10001/skw
+    username: skw
+    password: 1234
+    driver-class-name: org.mariadb.jdbc.Driver
+
+#  datasource:
+#    hikari:
+#      connection-test-query: SELECT 1
+#      pool-name: master
+#      maximum-pool-size: 30
+#      minimum-idle: 5
+#      jdbc-url: jdbc:mariadb://192.168.0.6:10001/skw
+#      username: skw
+#      password: 1234
+#      driver-class-name: org.mariadb.jdbc.Driver
+#      connection-timeout: 5000
+#      idle-timeout: 10000
 
   # Redis
   data:
