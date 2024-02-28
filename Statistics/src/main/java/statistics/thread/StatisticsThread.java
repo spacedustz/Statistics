@@ -14,7 +14,7 @@ public class StatisticsThread extends Thread {
     private RedisService redisService;
     private StatisticsService statisticsService;
     private List<String> keyList;
-    private Integer squareMeter = new Random().nextInt(21)+ 30;
+    private Integer squareMeter = new Random().nextInt(21)+ 10;
     private String baseTime = "", routingKey = "", eventTime = "", eventSec = "";
     private int eventSecInt = 0, totalSquareMeter = squareMeter, sum = 0, count = 0, max = 0, min = 0, value = 0;
     private BigDecimal average = BigDecimal.ZERO;
@@ -46,16 +46,11 @@ public class StatisticsThread extends Thread {
                 // 기준이 되는 시간 (60초)
                 long validStatTime = Long.parseLong(DateUtil.getDateTime(DateUtil.addSeconds(new Date(), -60)));
 
-                log.info("========== \uD83D\uDCC4 {} 통계 처리 시작 ==========", routingKey);
-                log.info("기준 시간 = {}", validStatTime);
-
                 // 정렬된 Hash 필드와 값의 각 엔트리 Loop
                 List<Map.Entry<String, Integer>> entryList = new ArrayList<>(sortedHash.entrySet());
-                log.info("Hash 수 : {}", entryList.size());
 
                 for (int x = 0; x < entryList.size(); x++) {
                     Map.Entry<String, Integer> entry = entryList.get(x);
-
                     // 삭제할 Hash Key 추가
                     hashKeyToDelete.add(entry.getKey());
 
@@ -84,10 +79,8 @@ public class StatisticsThread extends Thread {
                     }
                 } // For Loop
 
-                log.info("통계 인원수 평균값 : {}, 최소값 : {}, 최대값 : {}", averageLog.toString(), min, max);
+                log.info("{} - 통계 인원수 평균값 : {}, 최소값 : {}, 최대값 : {}", routingKey, averageLog.toString(), min, max);
                 this.averageLog = BigDecimal.ZERO;
-
-                log.info("통계 처리 완료");
             } catch (Exception e) {
                 log.error("통계 Thread Exception - {}", e.getMessage());
                 e.printStackTrace();
@@ -95,8 +88,10 @@ public class StatisticsThread extends Thread {
                 // 평균 값을 구하는데 사용한 데이터를 Redis에서 제거
                 if (!hashKeyToDelete.isEmpty()) {
                     redisService.deleteHashKeys(key, hashKeyToDelete.toArray());
-                    log.info("Statistics Thread - Delete Hash Keys");
+                    log.info("{} - Delete Hash Keys", routingKey);
                 }
+
+                log.info("{} - \uD83D\uDCC4 15초 통계 저장 완료", routingKey);
             }
         }
     }
