@@ -18,7 +18,7 @@ java {
 }
 
 repositories {
-    mavenLocal()
+//    mavenLocal()
     mavenCentral()
 }
 
@@ -29,7 +29,10 @@ repositories {
 
 dependencies {
     // Estimation Common
-    implementation group: 'com.dains', name: 'Common', version: '1.0.0'
+//    implementation group: 'com.dains', name: 'Common', version: '1.0.0'
+
+    // MariaDB
+    runtimeOnly("org.mariadb.jdbc:mariadb-java-client")
 
     // Spring Data JPA
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
