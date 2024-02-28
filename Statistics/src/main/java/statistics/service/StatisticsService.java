@@ -84,27 +84,43 @@ public class StatisticsService {
         }
     }
 
-    /* 30초 통계 생성 */
+    /* 30초 통계 생성, 15, 45초마다 실행 */
     @Scheduled(cron = "15,45 * * * * *")
     public void calculate30SecStats() {
         Date date = new Date();
         String now = DateUtil.getDate(date, "yyyyMMddHHmmss");
-        Integer currentSec = Integer.parseInt(now.substring(12,14));
+        int currentSec = Integer.parseInt(now.substring(12, 14));
 
         // 현재 시간의 초가 15 ~ 45초 사이이면 이전 분의 45, 00초 통계를 이용해 30초 통계 생성
         if (currentSec >= 15 && currentSec < 45) {
             String targetStatsDate = DateUtil.getDate(DateUtil.addMinutesToJavaDate(date, -1), "yyyyMMddHHmmss");
-            String targetYyyyMmDd = targetStatsDate.substring(0,8);
-            String targetHhMm = targetStatsDate.substring(8,12);
+            String targetYyyyMmDd = targetStatsDate.substring(0, 8);
+            String targetHhMm = targetStatsDate.substring(8, 12);
 
-            svc30SecStatRepository.create30SecStats(targetYyyyMmDd, targetHhMm + "45", now.substring(8,12) + "00");
+            svc30SecStatRepository.create30SecStats(targetYyyyMmDd, targetHhMm + "45", now.substring(8, 12) + "00");
         }
         // 현재 분의 15초, 30초 통계를 이용한 30초 통계 생성
         else {
-            String yyyymmdd = now.substring(0,8);
-            String hhmm = now.substring(8,12);
+            String yyyymmdd = now.substring(0, 8);
+            String hhmm = now.substring(8, 12);
 
             svc30SecStatRepository.create30SecStats(yyyymmdd, hhmm + "15", hhmm + "30");
         }
+    }
+
+    /**
+     * 1분 통계, n분 5초마다 실행
+     * 15초 통계의 15,30,45, 다음 분의 00초를 이용해 1분 통계 저장
+     */
+    @Scheduled(cron = "5 * * * * *")
+    public void calculate1MinStats() {
+        Date date = new Date();
+        String now = DateUtil.getDate(date, "yyyyMMddHHmmss");
+        String targetStatsDate = DateUtil.getDate(DateUtil.addMinutesToJavaDate(date, -1), "yyyyMMddHHmmss");
+
+        String yyyymmdd = targetStatsDate.substring(0, 8);
+        String hhmm = targetStatsDate.substring(8, 12);
+
+        svc1MinStatRepository.create1MinStats(yyyymmdd, hhmm + "15", now.substring(8, 12) + "00");
     }
 }
