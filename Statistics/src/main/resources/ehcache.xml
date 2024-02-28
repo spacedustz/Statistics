@@ -8,7 +8,7 @@
         </expiry>
         <listeners>
             <listener>
-                <class>com.dains.common.util.EhcacheEventLogging</class>
+                <class>statistics.util.EhcacheEventLogging</class>
                 <event-firing-mode>ASYNCHRONOUS</event-firing-mode>
                 <event-ordering-mode>UNORDERED</event-ordering-mode>
                 <events-to-fire-on>CREATED</events-to-fire-on>
