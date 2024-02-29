@@ -63,7 +63,6 @@ public class StatisticsService {
     @Scheduled(cron = "3,18,33,48 * * * * *")
     public void calculate15SecStats() {
         List<String> keyList = new ArrayList<>();
-        String currentTime = DateUtil.getTime();
         Set<String> statsKeys = redisService.getAllStatsKeys();
 
         for (String key : statsKeys) {

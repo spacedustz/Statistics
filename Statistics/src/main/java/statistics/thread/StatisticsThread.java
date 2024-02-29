@@ -1,5 +1,8 @@
 package statistics.thread;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import statistics.constants.RedisConstants;
 import statistics.service.StatisticsService;
@@ -7,18 +10,15 @@ import statistics.service.redis.RedisService;
 import statistics.util.DateUtil;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 
 @Slf4j
 public class StatisticsThread extends Thread {
-    private RedisService redisService;
-    private StatisticsService statisticsService;
-    private List<String> keyList;
-    private Integer squareMeter = new Random().nextInt(21)+ 10;
-    private String baseTime = "", routingKey = "", eventTime = "", eventSec = "";
-    private int eventSecInt = 0, totalSquareMeter = squareMeter, sum = 0, count = 0, max = 0, min = 0, value = 0;
-    private BigDecimal average = BigDecimal.ZERO;
-    private BigDecimal averageLog = BigDecimal.ZERO;
+    private final RedisService redisService;
+    private final StatisticsService statisticsService;
+    private final List<String> keyList;
+    private final Integer squareMeter = new Random().nextInt(21) + 20;
 
     public StatisticsThread(List<String> keyList, RedisService redisService, StatisticsService statisticsService) {
         this.keyList = keyList;
@@ -28,10 +28,16 @@ public class StatisticsThread extends Thread {
 
     @Override
     public void run() {
-        for (int i = 0; i < keyList.size(); i++) {
-            String key = keyList.get(i);
+        for (String key : keyList) {
+            log.info("================= 키 리스트 사이즈 : {} ==================", keyList.size());
             Set<String> hashKeyToDelete = new HashSet<>();
-            routingKey = key.substring(RedisConstants.INSTANCE_COUNT.length());
+            Stats stats = new Stats();
+
+            String routingKey = key.substring(RedisConstants.INSTANCE_COUNT.length());
+            String eventTime;
+            int eventSecInt;
+            int totalSquareMeter = squareMeter;
+            String baseTime = "";
 
             try {
                 // 특정 Hash의 모든 Hash Key, Hash Value를 가져와 TreeMap으로 변환 - 키 기준 정렬
@@ -41,13 +47,13 @@ public class StatisticsThread extends Thread {
                 TreeMap<String, Integer> sortedHash = new TreeMap<>(hashValues);
                 if (sortedHash.isEmpty()) return;
 
-                resetStats();
+                // 정렬된 Hash 필드와 값의 각 엔트리 Loop
+                List<Map.Entry<String, Integer>> entryList = new ArrayList<>(sortedHash.entrySet());
+
+                resetStats(stats);
 
                 // 기준이 되는 시간 (60초)
                 long validStatTime = Long.parseLong(DateUtil.getDateTime(DateUtil.addSeconds(new Date(), -60)));
-
-                // 정렬된 Hash 필드와 값의 각 엔트리 Loop
-                List<Map.Entry<String, Integer>> entryList = new ArrayList<>(sortedHash.entrySet());
 
                 for (int x = 0; x < entryList.size(); x++) {
                     Map.Entry<String, Integer> entry = entryList.get(x);
@@ -55,32 +61,47 @@ public class StatisticsThread extends Thread {
                     hashKeyToDelete.add(entry.getKey());
 
                     eventTime = entry.getKey();
-                    value = entry.getValue();
-                    eventSec = eventTime.substring(12, 14);
-                    eventSecInt = Integer.parseInt(eventSec);
+                    eventSecInt = Integer.parseInt(eventTime.substring(12, 14));
+                    stats.setValue(entry.getValue());
 
                     // Hash Key(Event Time)이 유호시간(60초)보다 이전이거나 값이 0이면 통계 계산을 하지 않고 건너뜀
-                    if (Long.parseLong(eventTime) < validStatTime || value == 0) continue;
+                    if (Long.parseLong(eventTime) < validStatTime || stats.getValue() == 0) continue;
+
+                    String eventSecond = getEventSec(eventSecInt);
+                    String newBaseTime = eventTime.substring(0, 12) + eventSecond;
 
                     // 첫번쨰 Entry이면서 마지막 엔트리가 아닐때, 즉 전체 Entry 개수가 1이 아니면서 첫번째 데이터인 경우
                     if (x == 0 && entryList.size() != 1) {
-                        baseTime = getBaseTime(eventSecInt, eventTime);
+                        updateStatsForFirstData(stats);
+                    }
+                    // 마지막 데이터가 아닌경우
+                    else if (x + 1 != entryList.size()) {
+//                        baseTime = processStatsByTimeRange(eventSecInt, eventTime, stats, totalSquareMeter, routingKey, baseTime);
 
-                        sum += value;
-                        count++;
-                        max = value;
-                        min = value;
-                        // 마지막 데이터가 아닌경우
-                    } else if (x + 1 != entryList.size()) {
-                        processStatsByTimeRange(eventSecInt, baseTime, eventTime, value, count, sum, totalSquareMeter, max, min);
-                        // 마지막 데이터인 경우
-                    } else if (x + 1 == entryList.size()) {
-                        processStatsByTimeRange2(eventSecInt, baseTime, eventTime, value, count, sum, totalSquareMeter, max, min);
+                        if (baseTime.equals(eventTime.substring(0, 12) + getEventSec(eventSecInt))) {
+                            updateStats(stats);
+                        } else {
+                            if (stats.getCount() > 0) saveStats(stats, totalSquareMeter, routingKey, baseTime);
+                            resetStats(stats);
+                            baseTime = newBaseTime;
+                            updateStats(stats);
+                        }
+                    }
+                    // 마지막 데이터인 경우
+                    else if (x + 1 == entryList.size()) {
+//                        baseTime = processStatsByTimeRangeForLastData(eventSecInt, eventTime, stats, totalSquareMeter, routingKey, baseTime);
+
+                        if (baseTime.equals(newBaseTime)) {
+                            if (eventSecInt >= 1 && eventSecInt < 16) updateStatsForLastData(stats); else updateStats(stats);
+                            if (stats.getCount() > 0) saveStats(stats, totalSquareMeter, routingKey, baseTime);
+                        } else {
+                            updateStats(stats);
+                            baseTime = newBaseTime;
+                            if (stats.getCount() > 0) saveStats(stats, totalSquareMeter, routingKey, baseTime);
+                            resetStats(stats);
+                        }
                     }
                 } // For Loop
-
-                log.info("{} - 통계 인원수 평균값 : {}, 최소값 : {}, 최대값 : {}", routingKey, averageLog.toString(), min, max);
-                this.averageLog = BigDecimal.ZERO;
             } catch (Exception e) {
                 log.error("통계 Thread Exception - {}", e.getMessage());
                 e.printStackTrace();
@@ -90,176 +111,111 @@ public class StatisticsThread extends Thread {
                     redisService.deleteHashKeys(key, hashKeyToDelete.toArray());
                     log.info("{} - Delete Hash Keys", routingKey);
                 }
-
-                log.info("{} - \uD83D\uDCC4 15초 통계 저장 완료", routingKey);
             }
         }
     }
 
-    /* Event Time의 Second에 따라 기준 Second 반환 */
-    private String getBaseTime(int eventSecInt, String eventTime) {
+    private String getEventSec(int eventSecInt) {
         if (eventSecInt >= 1 && eventSecInt < 16) {
-            return eventTime.substring(0, 12) + "15";
+            return "15";
         } else if (eventSecInt >= 16 && eventSecInt < 31) {
-            return eventTime.substring(0, 12) + "30";
+            return "30";
         } else if (eventSecInt >= 31 && eventSecInt < 46) {
-            return eventTime.substring(0, 12) + "45";
+            return "45";
         } else if (eventSecInt >= 46 || eventSecInt == 0) {
-            return eventTime.substring(0, 12) + "00";
+            return "00";
         } else {
             return "";
         }
     }
 
-    private void resetStats() {
-        count = 0;
-        sum = 0;
-        max = 0;
-        min = 0;
-        value = 0;
+    private void resetStats(Stats stats) {
+        stats.initProperties();
     }
 
-    private void updateStats(int value, int max, int min) {
-        if (max < value) this.max = value;
-        if (min > value) this.min = value;
-        this.sum += value;
-        this.count++;
+    private void updateStatsForFirstData(Stats stats) {
+        stats.setSum(stats.getSum() + stats.getValue());
+        stats.setCount(stats.getCount() + 1);
+        stats.setMax(stats.getValue());
+        stats.setMin(stats.getValue());
+        log.info("First Min = {}", stats.getMin());
     }
 
-    private void updateStats2(int value) {
-        this.sum += value;
-        this.count++;
+    private void updateStats(Stats stats) {
+        int max = stats.getMax();
+        int min = stats.getMin();
+        int value = stats.value;
+
+        if (max < value) stats.setMax(value);
+        if (min > value) stats.setMin(value);
+        stats.setSum(stats.getSum() + stats.getValue());
+        stats.setCount(stats.getCount() + 1);
+        log.info("Middle Min = {}", stats.getMin());
     }
 
-    private void saveStats(int count) {
-        if (count > 0) {
+    private void updateStatsForLastData(Stats stats) {
+        stats.setMax(stats.getValue());
+        stats.setMin(stats.getValue());
+        stats.setSum(stats.getSum() + stats.getValue());
+        stats.setCount(stats.getCount() + 1);
+        log.info("Last Min = {}", stats.getMin());
+    }
+
+    private void saveStats(Stats stats, int totalSquareMeter, String routingKey, String baseTime) {
             // 평균값 계산
-            this.average = BigDecimal.valueOf(this.sum)
-                    .divide(BigDecimal.valueOf(this.count), 3, BigDecimal.ROUND_HALF_UP)
-                    .divide(BigDecimal.valueOf(this.totalSquareMeter), 3, BigDecimal.ROUND_HALF_UP);
+            synchronized (StatisticsThread.class) {
+                BigDecimal average = BigDecimal.valueOf(stats.getSum())
+                        .divide(BigDecimal.valueOf(stats.getCount()), 1, RoundingMode.HALF_UP)
+                        .divide(BigDecimal.valueOf(totalSquareMeter), 3, RoundingMode.HALF_UP);
 
-            // DB에 저장
-            statisticsService.save15SecAvgToDB(
-                    baseTime.substring(0, 8),
-                    baseTime.substring(8, 14),
-                    routingKey,
-                    average,
-                    new BigDecimal(this.max).divide(BigDecimal.valueOf(this.totalSquareMeter), 3, BigDecimal.ROUND_HALF_UP),
-                    new BigDecimal(this.min).divide(BigDecimal.valueOf(this.totalSquareMeter), 3, BigDecimal.ROUND_HALF_UP)
-            );
+                long now = Long.parseLong(DateUtil.getTime());
 
-            log.info("Save Statistics Data to MariaDB");
+                if (baseTime.isEmpty()) {
+                    log.info("baseTime의 값이 없습니다.");
+                    return;
+                }
 
-            this.averageLog = average;
-            this.average = BigDecimal.ZERO;
-            log.info("Initialize Average");
-        }
+
+                if (Long.parseLong(baseTime) > now) {
+                    log.info("미래의 시간입니다.");
+                    return;
+                }
+                // DB에 저장
+                try {
+                    statisticsService.save15SecAvgToDB(
+                            baseTime.substring(0, 8),
+                            baseTime.substring(8, 14),
+                            routingKey,
+                            average,
+                            new BigDecimal(stats.getMax()).divide(BigDecimal.valueOf(totalSquareMeter), 3, RoundingMode.HALF_UP),
+                            new BigDecimal(stats.getMin()).divide(BigDecimal.valueOf(totalSquareMeter), 3, RoundingMode.HALF_UP)
+                    );
+
+                    log.info("15초 통계 저장 - min 값 : {}", new BigDecimal(stats.getMin()).divide(BigDecimal.valueOf(totalSquareMeter), 3, RoundingMode.HALF_UP));
+                } catch (Exception e) {
+                    log.error("15초 통계 저장 실패 - {}", e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+
     }
 
-    private void processStatsByTimeRange(int eventSecInt, String baseTime, String eventTime, int value, int count, int sum, int totalSquareMeter, int max, int min) {
-        // 01 ~ 15초 통계 - baseTime이 15초와 동일하면 변수 업데이트 & DB 저장
-        if (eventSecInt >= 1 && eventSecInt < 16) {
-            if (baseTime.equals(eventTime.substring(0, 12) + "15")) {
-                updateStats(value, max, min);
-            } else {
-                saveStats(count);
-                resetStats();
-                setBaseTime(eventTime, "15");
-                updateStats(value, max, min);
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    private static class Stats {
+        int count = 0;
+        int sum = 0;
+        int max = 0;
+        int min = Integer.MAX_VALUE;
+        int value = 0;
 
-            }
+        public void initProperties() {
+            this.count = 0;
+            this.sum = 0;
+            this.max = 0;
+            this.min = 0;
+            this.value = 0;
         }
-        // 16 ~ 30초 통계 - baseTime이 30초와 동일하면 변수 업데이트 & DB 저장
-        else if (eventSecInt >= 16 && eventSecInt < 31) {
-            if (baseTime.equals(eventTime.substring(0, 12) + "30")) {
-                updateStats(value, max, min);
-            } else {
-                saveStats(count);
-                resetStats();
-                setBaseTime(eventTime, "30");
-                updateStats(value, max, min);
-            }
-        }
-
-        // 31 ~ 45초 통계 - baseTime이 45초와 동일하면 변수 업데이트 & DB 저장
-        else if (eventSecInt >= 31 && eventSecInt < 46) {
-            if (baseTime.equals(eventTime.substring(0, 12) + "45")) {
-                updateStats(value, max, min);
-            } else {
-                saveStats(count);
-                resetStats();
-                setBaseTime(eventTime, "45");
-                updateStats(value, max, min);
-            }
-        }
-
-        // 45 ~ 00초 통계 - baseTime이 00초와 동일하면 변수 업데이트 & DB 저장
-        else if (eventSecInt >= 46 || eventSecInt == 0) {
-            if (baseTime.equals(eventTime.substring(0, 12) + "00")) {
-                updateStats(value, max, min);
-            } else {
-                saveStats(count);
-                resetStats();
-                setBaseTime(eventTime, "00");
-                updateStats(value, max, min);
-            }
-        }
-    }
-
-    private void processStatsByTimeRange2(int eventSecInt, String baseTime, String eventTime, int value, int count, int sum, int totalSquareMeter, int max, int min) {
-        // 01 ~ 15초 통계 - baseTime이 15초와 동일하면 변수 업데이트 & DB 저장
-        if (eventSecInt >= 1 && eventSecInt < 16) {
-            if (baseTime.equals(eventTime.substring(0, 12) + "15")) {
-                updateStats2(value);
-                saveStats(count);
-            } else {
-                updateStats(value, max, min);
-                setBaseTime(eventTime, "15");
-                saveStats(count);
-                resetStats();
-            }
-        }
-        // 16 ~ 30초 통계 - baseTime이 30초와 동일하면 변수 업데이트 & DB 저장
-        else if (eventSecInt >= 16 && eventSecInt < 31) {
-            if (baseTime.equals(eventTime.substring(0, 12) + "30")) {
-                updateStats(value, max, min);
-                saveStats(count);
-            } else {
-                updateStats(value, max, min);
-                setBaseTime(eventTime, "30");
-                saveStats(count);
-                resetStats();
-            }
-        }
-
-        // 31 ~ 45초 통계 - baseTime이 45초와 동일하면 변수 업데이트 & DB 저장
-        else if (eventSecInt >= 31 && eventSecInt < 46) {
-            if (baseTime.equals(eventTime.substring(0, 12) + "45")) {
-                updateStats(value, max, min);
-                saveStats(count);
-            } else {
-                updateStats(value, max, min);
-                setBaseTime(eventTime, "45");
-                saveStats(count);
-                resetStats();
-            }
-        }
-
-        // 45 ~ 00초 통계 - baseTime이 00초와 동일하면 변수 업데이트 & DB 저장
-        else if (eventSecInt >= 46 || eventSecInt == 0) {
-            if (baseTime.equals(eventTime.substring(0, 12) + "00")) {
-                updateStats(value, max, min);
-                saveStats(count);
-            } else {
-                updateStats(value, max, min);
-                setBaseTime(eventTime, "00");
-                saveStats(count);
-                resetStats();
-            }
-        }
-    }
-
-    private void setBaseTime(String eventTime, String second) {
-        baseTime = eventTime.substring(0,12) + second;
     }
 }
