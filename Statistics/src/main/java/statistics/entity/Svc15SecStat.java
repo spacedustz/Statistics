@@ -21,13 +21,13 @@ public class Svc15SecStat {
     @EmbeddedId
     private Svc15SecPk id;
 
-    @Column(name = "average_count", nullable = false, precision = 5, scale = 2)
+    @Column(name = "average_count", nullable = false, precision = 6, scale = 3)
     private BigDecimal averageCount;
 
-    @Column(name = "min_people_count", nullable = false, precision = 5, scale = 2)
+    @Column(name = "min_people_count", nullable = false, precision = 6, scale = 3)
     private BigDecimal minPeopleCount;
 
-    @Column(name = "max_people_count", nullable = false, precision = 5, scale = 2)
+    @Column(name = "max_people_count", nullable = false, precision = 6, scale = 3)
     private BigDecimal maxPeopleCount;
 
     @Builder
