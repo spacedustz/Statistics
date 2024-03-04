@@ -7,6 +7,7 @@ import statistics.service.redis.RedisService;
 import statistics.util.DateUtil;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 
 @Slf4j
@@ -14,11 +15,10 @@ public class StatisticsThread extends Thread {
     private RedisService redisService;
     private StatisticsService statisticsService;
     private List<String> keyList;
-    private Integer squareMeter = new Random().nextInt(21)+ 10;
+    private Integer squareMeter = new Random().nextInt(21) + 10;
     private String baseTime = "", routingKey = "", eventTime = "", eventSec = "";
-    private int eventSecInt = 0, totalSquareMeter = squareMeter, sum = 0, count = 0, max = 0, min = 0, value = 0;
+    private int eventSecInt = 0, totalSquareMeter = squareMeter, sum = 0, count = 0, max = Integer.MIN_VALUE, min = Integer.MAX_VALUE, value = 0;
     private BigDecimal average = BigDecimal.ZERO;
-    private BigDecimal averageLog = BigDecimal.ZERO;
 
     public StatisticsThread(List<String> keyList, RedisService redisService, StatisticsService statisticsService) {
         this.keyList = keyList;
@@ -70,17 +70,15 @@ public class StatisticsThread extends Thread {
                         count++;
                         max = value;
                         min = value;
-                        // 마지막 데이터가 아닌경우
-                    } else if (x + 1 != entryList.size()) {
-                        processStatsByTimeRange(eventSecInt, baseTime, eventTime, value, count, max, min, false);
-                        // 마지막 데이터인 경우
-                    } else if (x + 1 == entryList.size()) {
-                        processStatsByTimeRange(eventSecInt, baseTime, eventTime, value, count, max, min, true);
-                    }
-                } // For Loop
 
-                log.info("{} - 통계 인원수 평균값 : {}, 최소값 : {}, 최대값 : {}", routingKey, averageLog.toString(), min, max);
-                this.averageLog = BigDecimal.ZERO;
+                    // 마지막 데이터가 아닌경우
+                    } else if (x + 1 != entryList.size()) {
+                        processStatsByTimeRange(eventSecInt, baseTime, eventTime, false);
+                    // 마지막 데이터인 경우
+                    } else if (x + 1 == entryList.size()) {
+                        processStatsByTimeRange(eventSecInt, baseTime, eventTime, true);
+                    }
+                }
             } catch (Exception e) {
                 log.error("통계 Thread Exception - {}", e.getMessage());
                 e.printStackTrace();
@@ -112,29 +110,32 @@ public class StatisticsThread extends Thread {
     private void resetStats() {
         count = 0;
         sum = 0;
-        max = 0;
-        min = 0;
+        max = Integer.MIN_VALUE;
+        min = Integer.MAX_VALUE;
         value = 0;
     }
 
-    private void updateStats(int value, int max, int min) {
-        if (max < value) this.max = value;
-        if (min > value) this.min = value;
-        this.sum += value;
-        this.count++;
+    private void updateStats() {
+        if (max < value) max = value;
+        if (min > value) min = value;
+        sum += value;
+        count++;
     }
 
-    private void updateLastStats(int value) {
-        this.sum += value;
-        this.count++;
+    private void updateLastStats() {
+        sum += value;
+        count++;
     }
 
-    private void saveStats(int count) {
+    private void saveStats() {
         if (count > 0) {
             // 평균값 계산
-            this.average = BigDecimal.valueOf(this.sum)
-                    .divide(BigDecimal.valueOf(this.count), 3, BigDecimal.ROUND_HALF_UP)
-                    .divide(BigDecimal.valueOf(this.totalSquareMeter), 3, BigDecimal.ROUND_HALF_UP);
+            average = BigDecimal.valueOf(sum)
+                    .divide(BigDecimal.valueOf(count), 3, RoundingMode.HALF_UP)
+                    .divide(BigDecimal.valueOf(totalSquareMeter), 3, RoundingMode.HALF_UP);
+
+            BigDecimal max = new BigDecimal(this.max).divide(BigDecimal.valueOf(totalSquareMeter), 3, RoundingMode.HALF_UP);
+            BigDecimal min = new BigDecimal(this.min).divide(BigDecimal.valueOf(totalSquareMeter), 3, RoundingMode.HALF_UP);
 
             // DB에 저장
             statisticsService.save15SecAvgToDB(
@@ -142,19 +143,16 @@ public class StatisticsThread extends Thread {
                     baseTime.substring(8, 14),
                     routingKey,
                     average,
-                    new BigDecimal(this.max).divide(BigDecimal.valueOf(this.totalSquareMeter), 3, BigDecimal.ROUND_HALF_UP),
-                    new BigDecimal(this.min).divide(BigDecimal.valueOf(this.totalSquareMeter), 3, BigDecimal.ROUND_HALF_UP)
+                    max,
+                    min
             );
 
-            log.info("Save Statistics Data to MariaDB");
-
-            this.averageLog = average;
-            this.average = BigDecimal.ZERO;
-            log.info("Initialize Average");
+            log.info("Save Statistics Data to MariaDB - Max : {}, Min : {}, Count  : {}", max, min, count);
+            average = BigDecimal.ZERO;
         }
     }
 
-    private void processStatsByTimeRange(int eventSecInt, String baseTime, String eventTime, int value, int count, int max, int min, boolean isLast) {
+    private void processStatsByTimeRange(int eventSecInt, String baseTime, String eventTime, boolean isLast) {
         String timeRange = "";
         if (eventSecInt >= 1 && eventSecInt < 16) {
             timeRange = "15";
@@ -167,36 +165,41 @@ public class StatisticsThread extends Thread {
         }
 
         if (isLast) {
-            processLastStats(baseTime, eventTime, value, count, max, min, timeRange);
+            processLastStats(baseTime, eventTime, timeRange);
         } else {
-            processMiddleStats(baseTime, eventTime, value, count, max, min, timeRange);
+            processMiddleStats(baseTime, eventTime, timeRange);
         }
     }
 
-    private void processMiddleStats(String baseTime, String eventTime, int value, int count, int max, int min, String timeRange) {
+    private void processMiddleStats(String baseTime, String eventTime, String timeRange) {
         if (baseTime.equals(eventTime.substring(0, 12) + timeRange)) {
-            updateStats(value, max, min);
+            updateStats();
         } else {
-            saveStats(count);
+//            saveStats();
+//            resetStats();
+//            setBaseTime(eventTime, timeRange);
+//            updateStats();
+            updateStats();
+            saveStats();
             resetStats();
             setBaseTime(eventTime, timeRange);
-            updateStats(value, max, min);
         }
     }
 
-    private void processLastStats(String baseTime, String eventTime, int value, int count, int max, int min, String timeRange) {
+    private void processLastStats(String baseTime, String eventTime, String timeRange) {
         if (baseTime.equals(eventTime.substring(0, 12) + timeRange)) {
-            if (timeRange.equals("15")) updateLastStats(value); else updateStats(value, max, min);
-            saveStats(count);
+            if (timeRange.equals("15")) updateLastStats();
+            else updateStats();
+            saveStats();
         } else {
-            updateStats(value, max, min);
+            updateStats();
             setBaseTime(eventTime, timeRange);
-            saveStats(count);
+            saveStats();
             resetStats();
         }
     }
 
     private void setBaseTime(String eventTime, String second) {
-        baseTime = eventTime.substring(0,12) + second;
+        baseTime = eventTime.substring(0, 12) + second;
     }
 }
