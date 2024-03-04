@@ -11,6 +11,8 @@ import org.springframework.stereotype.Repository;
 import statistics.entity.QSvc15SecStat;
 import statistics.entity.QSvc30SecStat;
 
+import java.util.List;
+
 @Slf4j
 @Repository
 @RequiredArgsConstructor
@@ -93,17 +95,14 @@ public class Svc30SecStatRepositoryImpl implements Svc30SecStatRepositoryCustom 
 //                    .execute();
 //        }
 
-
         // Native Query
-        String query = new StringBuilder()
-                .append("INSERT INTO svc_30sec_stats ")
-                .append("(yyyymmdd, hhmiss, average_count, max_people_count, min_people_count, instance_name)\n")
+        String selectQuery = new StringBuilder()
                 .append("SELECT ")
                 .append("'").append(yyyymmdd).append("', ")
                 .append("'").append(endHHmmss).append("', ")
-                .append("COALESCE(ROUND(AVG(source.average_count), 2), 0), ")
-                .append("COALESCE(ROUND(MAX(source.max_people_count), 2), 0), ")
-                .append("COALESCE(ROUND(MIN(source.min_people_count), 2), 0), ")
+                .append("COALESCE(ROUND(AVG(source.average_count), 3), 0), ")
+                .append("COALESCE(ROUND(MAX(source.max_people_count), 3), 0), ")
+                .append("COALESCE(ROUND(MIN(source.min_people_count), 3), 0), ")
                 .append("source.instance_name\n")
                 .append("FROM svc_15sec_stats as source\n")
                 .append("WHERE source.yyyymmdd = '").append(yyyymmdd).append("'\n")
@@ -111,7 +110,36 @@ public class Svc30SecStatRepositoryImpl implements Svc30SecStatRepositoryCustom 
                 .append("GROUP BY source.instance_name")
                 .toString();
 
-        log.info("\uD83D\uDCC4 30초 통계 저장 완료");
-        return em.createNativeQuery(query).executeUpdate();
+        String selectMinPeopleCount = new StringBuilder()
+                .append("SELECT source.min_people_count ")
+                .append("FROM svc_15sec_stats as source\n")
+                .append("WHERE source.yyyymmdd = '").append(yyyymmdd).append("'\n")
+                .append("AND source.hhmiss BETWEEN '").append(startHhmmss).append("' AND '").append(endHHmmss).append("'\n")
+                .toString();
+
+        List<Object> selectResult = em.createNativeQuery(selectMinPeopleCount).getResultList();
+
+        for (Object row : selectResult) {
+            log.info("30초 통계 min_people_count : {}", row.toString());
+        }
+
+        String insertQuery = new StringBuilder()
+                .append("INSERT INTO svc_30sec_stats ")
+                .append("(yyyymmdd, hhmiss, average_count, max_people_count, min_people_count, instance_name)\n")
+                .append(selectQuery)
+                .toString();
+
+        int result = 0;
+
+        try {
+            result = em.createNativeQuery(insertQuery).executeUpdate();
+            if (result > 0) {
+                log.info("\uD83D\uDCC4 30초 통계 저장 완료");
+            }
+        } catch (Exception e) {
+            log.error("30초 통계 저장 실패 - {}", e.getMessage());
+        }
+
+        return result;
     }
 }
