@@ -72,10 +72,10 @@ public class StatisticsThread extends Thread {
                         min = value;
                         // 마지막 데이터가 아닌경우
                     } else if (x + 1 != entryList.size()) {
-                        processStatsByTimeRange(eventSecInt, baseTime, eventTime, value, count, sum, totalSquareMeter, max, min);
+                        processStatsByTimeRange(eventSecInt, baseTime, eventTime, value, count, max, min, false);
                         // 마지막 데이터인 경우
                     } else if (x + 1 == entryList.size()) {
-                        processStatsByTimeRange2(eventSecInt, baseTime, eventTime, value, count, sum, totalSquareMeter, max, min);
+                        processStatsByTimeRange(eventSecInt, baseTime, eventTime, value, count, max, min, true);
                     }
                 } // For Loop
 
@@ -90,8 +90,6 @@ public class StatisticsThread extends Thread {
                     redisService.deleteHashKeys(key, hashKeyToDelete.toArray());
                     log.info("{} - Delete Hash Keys", routingKey);
                 }
-
-                log.info("{} - \uD83D\uDCC4 15초 통계 저장 완료", routingKey);
             }
         }
     }
@@ -126,7 +124,7 @@ public class StatisticsThread extends Thread {
         this.count++;
     }
 
-    private void updateStats2(int value) {
+    private void updateLastStats(int value) {
         this.sum += value;
         this.count++;
     }
@@ -156,106 +154,45 @@ public class StatisticsThread extends Thread {
         }
     }
 
-    private void processStatsByTimeRange(int eventSecInt, String baseTime, String eventTime, int value, int count, int sum, int totalSquareMeter, int max, int min) {
-        // 01 ~ 15초 통계 - baseTime이 15초와 동일하면 변수 업데이트 & DB 저장
+    private void processStatsByTimeRange(int eventSecInt, String baseTime, String eventTime, int value, int count, int max, int min, boolean isLast) {
+        String timeRange = "";
         if (eventSecInt >= 1 && eventSecInt < 16) {
-            if (baseTime.equals(eventTime.substring(0, 12) + "15")) {
-                updateStats(value, max, min);
-            } else {
-                saveStats(count);
-                resetStats();
-                setBaseTime(eventTime, "15");
-                updateStats(value, max, min);
-
-            }
-        }
-        // 16 ~ 30초 통계 - baseTime이 30초와 동일하면 변수 업데이트 & DB 저장
-        else if (eventSecInt >= 16 && eventSecInt < 31) {
-            if (baseTime.equals(eventTime.substring(0, 12) + "30")) {
-                updateStats(value, max, min);
-            } else {
-                saveStats(count);
-                resetStats();
-                setBaseTime(eventTime, "30");
-                updateStats(value, max, min);
-            }
+            timeRange = "15";
+        } else if (eventSecInt >= 16 && eventSecInt < 31) {
+            timeRange = "30";
+        } else if (eventSecInt >= 31 && eventSecInt < 46) {
+            timeRange = "45";
+        } else if (eventSecInt >= 46 || eventSecInt == 0) {
+            timeRange = "00";
         }
 
-        // 31 ~ 45초 통계 - baseTime이 45초와 동일하면 변수 업데이트 & DB 저장
-        else if (eventSecInt >= 31 && eventSecInt < 46) {
-            if (baseTime.equals(eventTime.substring(0, 12) + "45")) {
-                updateStats(value, max, min);
-            } else {
-                saveStats(count);
-                resetStats();
-                setBaseTime(eventTime, "45");
-                updateStats(value, max, min);
-            }
-        }
-
-        // 45 ~ 00초 통계 - baseTime이 00초와 동일하면 변수 업데이트 & DB 저장
-        else if (eventSecInt >= 46 || eventSecInt == 0) {
-            if (baseTime.equals(eventTime.substring(0, 12) + "00")) {
-                updateStats(value, max, min);
-            } else {
-                saveStats(count);
-                resetStats();
-                setBaseTime(eventTime, "00");
-                updateStats(value, max, min);
-            }
+        if (isLast) {
+            processLastStats(baseTime, eventTime, value, count, max, min, timeRange);
+        } else {
+            processMiddleStats(baseTime, eventTime, value, count, max, min, timeRange);
         }
     }
 
-    private void processStatsByTimeRange2(int eventSecInt, String baseTime, String eventTime, int value, int count, int sum, int totalSquareMeter, int max, int min) {
-        // 01 ~ 15초 통계 - baseTime이 15초와 동일하면 변수 업데이트 & DB 저장
-        if (eventSecInt >= 1 && eventSecInt < 16) {
-            if (baseTime.equals(eventTime.substring(0, 12) + "15")) {
-                updateStats2(value);
-                saveStats(count);
-            } else {
-                updateStats(value, max, min);
-                setBaseTime(eventTime, "15");
-                saveStats(count);
-                resetStats();
-            }
+    private void processMiddleStats(String baseTime, String eventTime, int value, int count, int max, int min, String timeRange) {
+        if (baseTime.equals(eventTime.substring(0, 12) + timeRange)) {
+            updateStats(value, max, min);
+        } else {
+            saveStats(count);
+            resetStats();
+            setBaseTime(eventTime, timeRange);
+            updateStats(value, max, min);
         }
-        // 16 ~ 30초 통계 - baseTime이 30초와 동일하면 변수 업데이트 & DB 저장
-        else if (eventSecInt >= 16 && eventSecInt < 31) {
-            if (baseTime.equals(eventTime.substring(0, 12) + "30")) {
-                updateStats(value, max, min);
-                saveStats(count);
-            } else {
-                updateStats(value, max, min);
-                setBaseTime(eventTime, "30");
-                saveStats(count);
-                resetStats();
-            }
-        }
+    }
 
-        // 31 ~ 45초 통계 - baseTime이 45초와 동일하면 변수 업데이트 & DB 저장
-        else if (eventSecInt >= 31 && eventSecInt < 46) {
-            if (baseTime.equals(eventTime.substring(0, 12) + "45")) {
-                updateStats(value, max, min);
-                saveStats(count);
-            } else {
-                updateStats(value, max, min);
-                setBaseTime(eventTime, "45");
-                saveStats(count);
-                resetStats();
-            }
-        }
-
-        // 45 ~ 00초 통계 - baseTime이 00초와 동일하면 변수 업데이트 & DB 저장
-        else if (eventSecInt >= 46 || eventSecInt == 0) {
-            if (baseTime.equals(eventTime.substring(0, 12) + "00")) {
-                updateStats(value, max, min);
-                saveStats(count);
-            } else {
-                updateStats(value, max, min);
-                setBaseTime(eventTime, "00");
-                saveStats(count);
-                resetStats();
-            }
+    private void processLastStats(String baseTime, String eventTime, int value, int count, int max, int min, String timeRange) {
+        if (baseTime.equals(eventTime.substring(0, 12) + timeRange)) {
+            if (timeRange.equals("15")) updateLastStats(value); else updateStats(value, max, min);
+            saveStats(count);
+        } else {
+            updateStats(value, max, min);
+            setBaseTime(eventTime, timeRange);
+            saveStats(count);
+            resetStats();
         }
     }
 
