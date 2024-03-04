@@ -112,6 +112,7 @@ AI Engine에서 분석된 RTSP Stream(IP Cam)의 특정영역 면적당 평균 �
 - 15초 데이터 2개의 average_count 값을 다시 AVG한 값을 average_count에 할당
 - 15초 데이터 2개의 Max, Min 값중 Max 2개중 큰값, Min 2개중 작은 값을 Max, Min에 할당
 - 아래 두 사진은 15~30초에 해당하는 15초 통계 2개의 데이터를 가지고 30초 통계 1개를 만듬
+- 15초, 30초 / 45초, 00초
 
 ![img](./Description/img/30sec-source.png)
 
@@ -121,7 +122,12 @@ AI Engine에서 분석된 RTSP Stream(IP Cam)의 특정영역 면적당 평균 �
 
 ### 15초 통계 데이터 기준으로 1분 데이터 생성
 
-- 진행중
+- DB에 저장되는 average, min, max의 타입을 Decimal(5,2)에서 Decimal(6,3)으로 변경
+- 15초 통계 4개 (15초, 30초, 45초, 00초)로 1분 데이터 통계 생성
+
+![img](./Description/img/1min-source.png)
+
+![img](./Description/img/1min-average.png)
 
 <br>
 
