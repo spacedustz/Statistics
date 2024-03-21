@@ -62,26 +62,29 @@ public class StatisticsService {
     /* 15초 통계 생성 */
     @Scheduled(cron = "3,18,33,48 * * * * *")
     public void calculate15SecStats() {
-        List<String> keyList = new ArrayList<>();
-        String currentTime = DateUtil.getTime();
         Set<String> statsKeys = redisService.getAllStatsKeys();
 
-        for (String key : statsKeys) {
-            keyList.add(key);
-
-            if (keyList.size() >= 15) {
-                List<String> keyListCopy = new ArrayList<>(keyList);
-                StatisticsThread thread = new StatisticsThread(keyListCopy, redisService, this);
-
-                executor.execute(thread);
-                keyList.clear();
-            }
-        }
-
-        if (!keyList.isEmpty()) {
-            StatisticsThread thread = new StatisticsThread(keyList, redisService, this);
+        if (statsKeys != null && !statsKeys.isEmpty()) {
+            StatisticsThread thread = new StatisticsThread(statsKeys, redisService, this);
             executor.execute(thread);
         }
+
+//        for (String key : statsKeys) {
+//            keyList.add(key);
+//
+//            if (keyList.size() >= 15) {
+//                List<String> keyListCopy = new ArrayList<>(keyList);
+//                StatisticsThread thread = new StatisticsThread(keyListCopy, redisService, this);
+//
+//                executor.execute(thread);
+//                keyList.clear();
+//            }
+//        }
+//
+//        if (!keyList.isEmpty()) {
+//            StatisticsThread thread = new StatisticsThread(keyList, redisService, this);
+//            executor.execute(thread);
+//        }
     }
 
     /* 30초 통계 생성, 15, 45초마다 실행 */
